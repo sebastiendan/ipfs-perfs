@@ -4,6 +4,7 @@ const perf = require('execution-time')()
 
 import { nodeA, nodeB } from './Nodes.singleton'
 import SSESubject from './Subject.singleton'
+import * as delay from 'delay'
 
 @Injectable()
 export class AppService {
@@ -14,6 +15,30 @@ export class AppService {
   public async initTransfer() {
     await nodeA.init()
     await nodeB.init()
+
+    await this.dial(nodeA, nodeB)
+    await this.dial(nodeB, nodeA)
+  }
+
+  private async dial (source, target) {
+    const targetId = await target.id()
+    const targetAddresses = targetId.addresses
+      .filter(ma => ma.toString().includes('127.0.0.1'))
+
+    await Promise.all(
+      targetAddresses
+        .map(ma => source.dial(ma))
+    )
+
+    while (true) {
+      const peers = await source.peers()
+
+      if (peers.filter(peer => peer.id === targetId.id).length) {
+        break
+      }
+
+      await delay(1000)
+    }
   }
 
   public startSyncQueue(bufferSizeInKB: number) {
@@ -56,10 +81,9 @@ export class AppService {
     perf.start('write')
     const file = await nodeA.add(buffer)
     const writePerf = perf.stop('write')
-    console.log('Hash:\n', file.path)
 
     perf.start('read')
-    await nodeB.get(file.path)
+    await nodeB.get(file.cid)
     const readPerf = perf.stop('read')
 
     return {
