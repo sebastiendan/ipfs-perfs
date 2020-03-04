@@ -10,5 +10,16 @@
     "tslint.json": "*",
     "nx.json": "*"
   },
-  "projects": {}
+  "projects": {
+    "frontend": {
+      "tags": []
+    },
+    "frontend-e2e": {
+      "tags": [],
+      "implicitDependencies": ["frontend"]
+    },
+    "api": {
+      "tags": []
+    }
+  }
 }
