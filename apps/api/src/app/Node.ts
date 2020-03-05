@@ -1,5 +1,5 @@
 import * as IPFS from 'ipfs'
-import * as all from 'it-all'
+import * as last from 'it-last'
 const concat = require('it-concat')
 
 export default class Node {
@@ -18,16 +18,31 @@ export default class Node {
     this._node = await IPFS.create(this.options)
   }
 
+  public async dial(multiaddr) {
+    return this._node.swarm.connect(multiaddr)
+  }
+
+  public async id() {
+    return this._node.id()
+  }
+
+  public async peers() {
+    return this._node.swarm.peers()
+  }
+
   public async add(data: string | Buffer) {
-    return (await all(this._node.add(data)))[0]
+    return last(this._node.add(data, {
+      preload: false,
+      pin: false
+    }))
   }
 
   public async get(hash: string) {
-    for await (const file of this._node.get(hash)) {
+    for await (const file of this._node.get(hash, { preload: false })) {
       console.log(file.path)
 
       const content = []
-      console.log('file content:\n', file.content)
+
       for await (const chunk of file.content) {
         console.log('chunk:\n', chunk.length)
         content.push(chunk.length)
