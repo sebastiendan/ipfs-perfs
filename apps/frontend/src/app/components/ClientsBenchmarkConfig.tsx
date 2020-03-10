@@ -42,7 +42,7 @@ const ClientsBenchmarkConfig: React.FC<Props> = (props: Props) => {
     setIsLoading(true)
 
     axios
-      .post('/api/perfs/start', { bufferSize })
+      .post('/api/clients-benchmark/start', { bufferSize })
       .then(() => {
         startCallback()
       })

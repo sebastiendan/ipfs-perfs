@@ -9,11 +9,12 @@ import { Subject, Observable, Subscription } from 'rxjs'
 const perf = require('execution-time')()
 import * as last from 'it-last'
 
-import { Datum, NormalizedData } from '@ipfs-perfs/models'
+import { ClientBenchmark } from '@ipfs-perfs/models'
+import { buildBuffer } from '@ipfs-perfs/utils'
 import SSESubject from './Subject.singleton'
 
 @Injectable()
-export class AppService {
+export class ClientsBenchmarkService {
   private apiWrite
   private apiRead
   private gatewayRead
@@ -22,7 +23,7 @@ export class AppService {
   private jsWrite
   private jsRead
   private data = []
-  private normalizedData: NormalizedData
+  private normalizedData: ClientBenchmark.NormalizedData
   private perfSubject: Subject<Observable<void>>
   private perfSubscription: Subscription
 
@@ -192,6 +193,11 @@ export class AppService {
       },
     })
 
+    process.once('SIGINT', () => {
+      console.info('\nStopping gracefully...')
+      this.stopSyncQueue()
+    })
+
     this.triggerPerfs(bufferSizeInKB)
   }
 
@@ -215,13 +221,15 @@ export class AppService {
 
   private triggerPerfs(bufferSizeInKB: number = 10): void {
     const newPerf = new Observable<void>(subscriber => {
-      this.writeReadAndGetPerfs(bufferSizeInKB).then((datum: Datum) => {
-        this.pushPerfData(datum)
-        this.normalizeData()
-        this.propagateUpdate()
+      this.writeReadAndGetPerfs(bufferSizeInKB).then(
+        (datum: ClientBenchmark.Datum) => {
+          this.pushPerfData(datum)
+          this.normalizeData()
+          this.propagateUpdate()
 
-        subscriber.complete()
-      })
+          subscriber.complete()
+        }
+      )
     })
 
     this.perfSubject.next(newPerf)
@@ -229,8 +237,8 @@ export class AppService {
 
   private async writeReadAndGetPerfs(
     bufferSizeInKB: number = 10
-  ): Promise<Datum> {
-    const buffer = this.buildBuffer(bufferSizeInKB)
+  ): Promise<ClientBenchmark.Datum> {
+    const buffer = buildBuffer(bufferSizeInKB)
 
     // perf.start('js-write')
     // const jsFile = await last(this.jsWrite.api.add(buffer))
@@ -299,22 +307,7 @@ export class AppService {
     }
   }
 
-  public buildBuffer(bufferSizeInKB) {
-    const size = bufferSizeInKB * 1024
-    const date = new Date().toISOString()
-    let content = ''
-
-    for (let i = 0; i < size / date.length; i++) {
-      content += date
-    }
-
-    const buffer = Buffer.alloc(size)
-    buffer.write(content)
-
-    return buffer
-  }
-
-  pushPerfData(datum: Datum) {
+  pushPerfData(datum: ClientBenchmark.Datum) {
     this.data.push(datum)
   }
 
@@ -329,12 +322,12 @@ export class AppService {
       }
 
       const arbitraryDatum = this.data[0]
-      const normalizedData = {} as NormalizedData
+      const normalizedData = {} as ClientBenchmark.NormalizedData
 
       Object.keys(arbitraryDatum).forEach(datumKey => {
         if (arbitraryDatum.hasOwnProperty(datumKey)) {
           normalizedData[datumKey] = this.data.map(
-            (datum: Datum, index: number) => ({
+            (datum: ClientBenchmark.Datum, index: number) => ({
               x: index + 1,
               y: datum[datumKey],
             })

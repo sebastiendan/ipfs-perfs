@@ -8,10 +8,10 @@ import {
   VictoryVoronoiContainer,
 } from 'victory'
 
-import { Coordinate } from '@ipfs-perfs/models'
+import { ClientBenchmark } from '@ipfs-perfs/models'
 
 interface Props {
-  data: { data: Coordinate[]; title: string }[]
+  data: { data: ClientBenchmark.Coordinate[]; title: string }[]
 }
 
 const Chart: React.FC<Props> = (props: Props) => {

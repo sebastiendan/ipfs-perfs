@@ -4,7 +4,7 @@ import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
 import { createStyles, makeStyles, Theme } from '@material-ui/core'
-import { Compare, Info, NetworkCheck } from '@material-ui/icons'
+import { Compare, Info, SettingsInputComponent } from '@material-ui/icons'
 import React from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 
@@ -36,11 +36,11 @@ const MainMenu: React.FC = () => {
       </List>
       <Divider />
       <List>
-        <ListItem button component={Link('/network-benchmark')}>
+        <ListItem button component={Link('/load-testing')}>
           <ListItemIcon>
-            <NetworkCheck />
+            <SettingsInputComponent />
           </ListItemIcon>
-          <ListItemText primary="Network benchmark" />
+          <ListItemText primary="Load testing" />
         </ListItem>
       </List>
       <Divider />

@@ -4,7 +4,7 @@ import Chip from '@material-ui/core/Chip'
 import axios from 'axios'
 import React from 'react'
 
-import { NormalizedData } from '@ipfs-perfs/models'
+import { ClientBenchmark } from '@ipfs-perfs/models'
 import Chart from './Chart'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -29,7 +29,7 @@ const ClientsBenchmarkPage: React.FC<Props> = (props: Props) => {
   const [readData, setReadData] = React.useState([])
 
   React.useEffect(function initPerfsEventSource() {
-    const perfsEventSource = new EventSource('/api/perfs')
+    const perfsEventSource = new EventSource('/api/clients-benchmark/results')
     perfsEventSource.onmessage = event => {
       const {
         apiRead,
@@ -39,7 +39,7 @@ const ClientsBenchmarkPage: React.FC<Props> = (props: Props) => {
         jsWrite,
         goRead,
         goWrite,
-      }: NormalizedData = JSON.parse(event.data)
+      }: ClientBenchmark.NormalizedData = JSON.parse(event.data)
 
       setWriteData([
         { data: apiWrite, title: 'http-api' },
@@ -61,7 +61,7 @@ const ClientsBenchmarkPage: React.FC<Props> = (props: Props) => {
   }, [])
 
   const handleStop = () => {
-    axios.post('/api/perfs/stop').then(() => {
+    axios.post('/api/clients-benchmark/stop').then(() => {
       stopCallback()
     })
   }
