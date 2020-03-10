@@ -2,12 +2,14 @@ import * as React from 'react'
 import { Redirect, Route, Switch } from 'react-router'
 
 import AboutPage from '../components/AboutPage'
-import BenchmarkPage from '../components/BenchmarkPage'
+import ClientsBenchmarkPage from '../components/ClientsBenchmarkPage'
+import NetworkBenchmarkPage from '../components/NetworkBenchmarkPage'
 
 const routes = (
   <Switch>
-    <Route exact={true} path="/" component={BenchmarkPage} />
-    <Route path="/benchmark" component={BenchmarkPage} />
+    <Route exact={true} path="/" component={ClientsBenchmarkPage} />
+    <Route path="/clients-benchmark" component={ClientsBenchmarkPage} />
+    <Route path="/network-benchmark" component={NetworkBenchmarkPage} />
     <Route path="/about" component={AboutPage} />
     <Redirect to="/" />
   </Switch>

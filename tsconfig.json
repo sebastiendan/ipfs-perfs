@@ -15,7 +15,9 @@
     "skipLibCheck": true,
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
-    "paths": {}
+    "paths": {
+      "@ipfs-perfs/models": ["libs/models/src/index.ts"]
+    }
   },
   "exclude": ["node_modules", "tmp"]
 }

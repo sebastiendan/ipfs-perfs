@@ -3,14 +3,14 @@ import * as last from 'it-last'
 const concat = require('it-concat')
 
 export default class Node {
-  public static createFromOptions(options: Object) {
+  public static createFromOptions(options: object) {
     return new Node(options)
   }
 
   private _node
   private options
 
-  private constructor(options: Object) {
+  private constructor(options: object) {
     this.options = options
   }
 
@@ -18,7 +18,7 @@ export default class Node {
     this._node = await IPFS.create(this.options)
   }
 
-  public async dial(multiaddr) {
+  public async dial(multiaddr: string) {
     return this._node.swarm.connect(multiaddr)
   }
 
@@ -31,10 +31,12 @@ export default class Node {
   }
 
   public async add(data: string | Buffer) {
-    return last(this._node.add(data, {
-      preload: false,
-      pin: false
-    }))
+    return last(
+      this._node.add(data, {
+        preload: false,
+        pin: false,
+      })
+    )
   }
 
   public async get(hash: string) {

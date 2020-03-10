@@ -4,6 +4,7 @@ import Chip from '@material-ui/core/Chip'
 import axios from 'axios'
 import React from 'react'
 
+import { NormalizedData } from '@ipfs-perfs/models'
 import Chart from './Chart'
 
 const useStyles = makeStyles((theme: Theme) =>
@@ -21,20 +22,41 @@ interface Props {
   stopCallback: () => void
 }
 
-const BenchmarkPage: React.FC<Props> = (props: Props) => {
+const ClientsBenchmarkPage: React.FC<Props> = (props: Props) => {
   const classes = useStyles()
   const { stopCallback } = props
-  const [perfsData, setPerfsData] = React.useState([])
+  const [writeData, setWriteData] = React.useState([])
+  const [readData, setReadData] = React.useState([])
 
   React.useEffect(function initPerfsEventSource() {
     const perfsEventSource = new EventSource('/api/perfs')
     perfsEventSource.onmessage = event => {
-      const data = JSON.parse(event.data)
-      setPerfsData(data)
+      const {
+        apiRead,
+        apiWrite,
+        gatewayRead,
+        jsRead,
+        jsWrite,
+        goRead,
+        goWrite,
+      }: NormalizedData = JSON.parse(event.data)
+
+      setWriteData([
+        { data: apiWrite, title: 'http-api' },
+        { data: jsWrite, title: 'js-ipfs' },
+        { data: goWrite, title: 'go-ipfs' },
+      ])
+      setReadData([
+        { data: apiRead, title: 'http-api' },
+        { data: jsRead, title: 'js-ipfs' },
+        { data: goRead, title: 'go-ipfs' },
+        { data: gatewayRead, title: 'gateway' },
+      ])
     }
 
     return function cleanup() {
-      setPerfsData([])
+      setWriteData([])
+      setReadData([])
     }
   }, [])
 
@@ -52,33 +74,15 @@ const BenchmarkPage: React.FC<Props> = (props: Props) => {
       <div className={classes.flexContainer}>
         <div>
           <Chip label="write" />
-          <Chart
-            data={
-              perfsData.length
-                ? perfsData.map((datum, index) => ({
-                    x: index + 1,
-                    y: Math.round(datum.write),
-                  }))
-                : []
-            }
-          />
+          <Chart data={writeData} />
         </div>
         <div>
           <Chip label="read" />
-          <Chart
-            data={
-              perfsData.length
-                ? perfsData.map((datum, index) => ({
-                    x: index + 1,
-                    y: Math.round(datum.read),
-                  }))
-                : []
-            }
-          />
+          <Chart data={readData} />
         </div>
       </div>
     </>
   )
 }
 
-export default BenchmarkPage
+export default ClientsBenchmarkPage

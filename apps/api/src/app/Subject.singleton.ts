@@ -1,3 +1,5 @@
 import { Subject } from 'rxjs'
 
-export default new Subject()
+import { NormalizedData } from '@ipfs-perfs/models'
+
+export default new Subject<NormalizedData>()

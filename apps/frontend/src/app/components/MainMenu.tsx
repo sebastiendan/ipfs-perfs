@@ -4,7 +4,7 @@ import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
 import { createStyles, makeStyles, Theme } from '@material-ui/core'
-import { Info, Speed } from '@material-ui/icons'
+import { Compare, Info, NetworkCheck } from '@material-ui/icons'
 import React from 'react'
 import { Link as RouterLink } from 'react-router-dom'
 
@@ -27,11 +27,20 @@ const MainMenu: React.FC = () => {
       <div className={classes.toolbar} />
       <Divider />
       <List>
-        <ListItem button component={Link('/benchmark')}>
+        <ListItem button component={Link('/clients-benchmark')}>
           <ListItemIcon>
-            <Speed />
+            <Compare />
           </ListItemIcon>
-          <ListItemText primary="js-ipfs" />
+          <ListItemText primary="Clients benchmark" />
+        </ListItem>
+      </List>
+      <Divider />
+      <List>
+        <ListItem button component={Link('/network-benchmark')}>
+          <ListItemIcon>
+            <NetworkCheck />
+          </ListItemIcon>
+          <ListItemText primary="Network benchmark" />
         </ListItem>
       </List>
       <Divider />

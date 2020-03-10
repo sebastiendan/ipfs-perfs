@@ -1,5 +1,6 @@
 import { createStyles, makeStyles, Theme } from '@material-ui/core'
 import Button from '@material-ui/core/Button'
+import CircularProgress from '@material-ui/core/CircularProgress'
 import Slider from '@material-ui/core/Slider'
 import Typography from '@material-ui/core/Typography'
 import axios from 'axios'
@@ -11,6 +12,10 @@ interface Props {
 
 const useStyles = makeStyles((theme: Theme) =>
   createStyles({
+    loader: {
+      marginRight: theme.spacing(1.5),
+      opacity: 0.5,
+    },
     title: {
       marginBottom: theme.spacing(4.5),
     },
@@ -27,15 +32,23 @@ const marks = [
   { value: 10000, label: '10MB' },
 ]
 
-const BenchmarkConfig: React.FC<Props> = (props: Props) => {
+const ClientsBenchmarkConfig: React.FC<Props> = (props: Props) => {
   const classes = useStyles()
   const { startCallback } = props
   const [bufferSize, setBufferSize] = React.useState(1000)
+  const [isLoading, setIsLoading] = React.useState(false)
 
   const handleStart = () => {
-    axios.post('/api/perfs/start', { bufferSize }).then(() => {
-      startCallback()
-    })
+    setIsLoading(true)
+
+    axios
+      .post('/api/perfs/start', { bufferSize })
+      .then(() => {
+        startCallback()
+      })
+      .then(() => {
+        setIsLoading(false)
+      })
   }
 
   const handleSliderChange = (e: object, value: number) => {
@@ -51,16 +64,23 @@ const BenchmarkConfig: React.FC<Props> = (props: Props) => {
         valueLabelDisplay="on"
         value={bufferSize}
         onChange={handleSliderChange}
+        disabled={isLoading}
         step={10}
         marks={marks}
         min={10}
         max={10000}
       />
-      <Button variant="outlined" color="primary" onClick={handleStart}>
+      <Button
+        variant="outlined"
+        color="primary"
+        onClick={handleStart}
+        disabled={isLoading}
+      >
+        {isLoading && <CircularProgress className={classes.loader} size={22} />}
         Start
       </Button>
     </>
   )
 }
 
-export default BenchmarkConfig
+export default ClientsBenchmarkConfig
