@@ -193,11 +193,6 @@ export class ClientsBenchmarkService {
       },
     })
 
-    process.once('SIGINT', () => {
-      console.info('\nStopping gracefully...')
-      this.stopSyncQueue()
-    })
-
     this.triggerPerfs(bufferSizeInKB)
   }
 

@@ -52,6 +52,7 @@
     "react-dom": "16.12.0",
     "react-number-format": "^4.4.1",
     "react-router-dom": "5.1.2",
+    "react-swipeable-views": "^0.13.9",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.5.4",
     "victory": "^34.1.1"

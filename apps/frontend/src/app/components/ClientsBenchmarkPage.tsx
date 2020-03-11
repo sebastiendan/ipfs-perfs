@@ -1,11 +1,19 @@
+import { makeStyles, Theme } from '@material-ui/core'
 import React from 'react'
 
-import ClientsBenchmarkConfig from './ClientsBenchmarkConfig'
+import ClientsBenchmarkForm from './ClientsBenchmarkForm'
 import ClientsBenchmarkResults from './ClientsBenchmarkResults'
 
-interface Props {}
+const useStyles = makeStyles((theme: Theme) => ({
+  root: {
+    backgroundColor: theme.palette.background.paper,
+    padding: theme.spacing(2.5),
+  },
+}))
 
-const ClientsBenchmarkPage: React.FC<Props> = (props: Props) => {
+const ClientsBenchmarkPage: React.FC = () => {
+  const classes = useStyles()
+  const [isColorBlind, setIsColorBlind] = React.useState(false)
   const [showResult, setShowResult] = React.useState(false)
 
   const handleBenchmarkStart = React.useCallback(() => {
@@ -16,14 +24,27 @@ const ClientsBenchmarkPage: React.FC<Props> = (props: Props) => {
     setShowResult(false)
   }, [])
 
+  const handleIsColorBlindChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setIsColorBlind(event.target.checked)
+  }
+
   return (
-    <>
+    <div className={classes.root}>
       {showResult ? (
-        <ClientsBenchmarkResults stopCallback={handleBenchmarkStop} />
+        <ClientsBenchmarkResults
+          isColorBlind={isColorBlind}
+          stopCallback={handleBenchmarkStop}
+        />
       ) : (
-        <ClientsBenchmarkConfig startCallback={handleBenchmarkStart} />
+        <ClientsBenchmarkForm
+          isColorBlind={isColorBlind}
+          handleIsColorBlindChange={handleIsColorBlindChange}
+          startCallback={handleBenchmarkStart}
+        />
       )}
-    </>
+    </div>
   )
 }
 

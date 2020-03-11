@@ -1,101 +1,122 @@
-import { createStyles, makeStyles, Theme } from '@material-ui/core'
+import { makeStyles, Theme } from '@material-ui/core'
 import Button from '@material-ui/core/Button'
 import CircularProgress from '@material-ui/core/CircularProgress'
 import TextField from '@material-ui/core/TextField'
 import axios from 'axios'
 import React from 'react'
 
-import { NetworkBenchmark } from '@ipfs-perfs/models'
+import { LoadTesting } from '@ipfs-perfs/models'
+import { assignCancelToken, cancelEffectCleaning } from '../../config'
+import BufferSizeSlider from './BufferSizeSlider'
+
+let cancelRequest
 
 interface Props {
-  disabled: boolean
+  handleLoadTestingIsLoading: () => void
+  handleLoadTestingIsNotLoading: () => void
+  isFormDisabled: boolean
+  isLoading: boolean
   startCallback: () => void
+  type: 'read' | 'write'
 }
 
-const useStyles = makeStyles((theme: Theme) =>
-  createStyles({
-    form: {
-      '& > *': {
-        margin: theme.spacing(1),
-      },
+const useStyles = makeStyles((theme: Theme) => ({
+  button: {
+    margin: theme.spacing(1),
+  },
+  flexContainer: {
+    '& > *': {
+      padding: theme.spacing(1),
     },
-    loader: {
-      marginRight: theme.spacing(1.5),
-      opacity: 0.5,
+    display: 'flex',
+    justifyContent: 'space-around',
+  },
+  form: {
+    '& > *': {
+      margin: theme.spacing(1),
     },
-  })
-)
+  },
+  loader: {
+    marginRight: theme.spacing(1.5),
+    opacity: 0.5,
+  },
+}))
 
 const NetworkBenchmarkConfig: React.FC<Props> = (props: Props) => {
   const classes = useStyles()
-  const { disabled, startCallback } = props
-  const [numberOfConnections, setNumberOfConnections] = React.useState('10')
+  const {
+    handleLoadTestingIsLoading,
+    handleLoadTestingIsNotLoading,
+    isFormDisabled,
+    isLoading,
+    startCallback,
+    type,
+  } = props
+  const [bufferSizeInKB, setBufferSizeInKB] = React.useState(1000)
   const [durationInSeconds, setDurationInSeconds] = React.useState('10')
-  const [isLoading, setIsLoading] = React.useState(false)
+
+  React.useEffect(() => {
+    return cancelEffectCleaning(cancelRequest)
+  }, [])
 
   const handleStart = () => {
-    setIsLoading(true)
-    const data: NetworkBenchmark.StartBenchmarkDto = {
+    handleLoadTestingIsLoading()
+    const data: LoadTesting.StartDto = {
+      bufferSizeInKB,
       durationInSeconds,
-      numberOfConnections,
     }
 
     axios
-      .post('/api/network-benchmark/start', data)
+      .post(`/api/load-testing/${type}/start`, data, {
+        cancelToken: assignCancelToken(cancelRequest),
+      })
       .then(() => {
         startCallback()
       })
       .then(() => {
-        setIsLoading(false)
+        handleLoadTestingIsNotLoading()
       })
   }
 
-  const handleChange = (field: string) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    let stateCallback
+  const handleBufferSizeChange = (e: object, value: number) => {
+    setBufferSizeInKB(value)
+  }
 
-    switch (field) {
-      case 'numberOfConnections':
-        stateCallback = setNumberOfConnections
-        break
-      case 'durationInSeconds':
-        stateCallback = setDurationInSeconds
-        break
-    }
-
-    if (stateCallback && !isNaN(+e.target.value)) {
-      stateCallback(e.target.value)
+  const handleDurationChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isNaN(+e.target.value)) {
+      setDurationInSeconds(e.target.value)
     }
   }
 
   return (
     <>
-      <form className={classes.form} noValidate autoComplete="off">
-        <TextField
-          id="number-of-connections"
-          disabled={isLoading || disabled}
-          label="Number of connections"
-          onChange={handleChange('numberOfConnections')}
-          type="number"
-          variant="outlined"
-          value={numberOfConnections}
-        />
-        <TextField
-          id="duration-in-seconds"
-          disabled={isLoading || disabled}
-          label="Duration in seconds"
-          onChange={handleChange('durationInSeconds')}
-          type="number"
-          variant="outlined"
-          value={durationInSeconds}
-        />
-      </form>
+      <div className={classes.flexContainer}>
+        <div>
+          <TextField
+            id="duration-in-seconds"
+            disabled={isLoading || isFormDisabled}
+            label="Duration in seconds"
+            margin="normal"
+            onChange={handleDurationChange}
+            type="number"
+            variant="outlined"
+            value={durationInSeconds}
+          />
+        </div>
+        <div style={{ flex: 1 }}>
+          <BufferSizeSlider
+            disabled={isLoading || isFormDisabled}
+            onChange={handleBufferSizeChange}
+            value={bufferSizeInKB}
+          />
+        </div>
+      </div>
       <Button
         variant="outlined"
         color="primary"
+        className={classes.button}
         onClick={handleStart}
-        disabled={isLoading || disabled}
+        disabled={isLoading || isFormDisabled}
       >
         {isLoading && <CircularProgress className={classes.loader} size={22} />}
         Start

@@ -22,9 +22,11 @@ export namespace ClientBenchmark {
   }
 }
 
-export namespace NetworkBenchmark {
-  export class StartBenchmarkDto {
+export namespace LoadTesting {
+  export type OperationTypes = 'read' | 'write'
+
+  export class StartDto {
     durationInSeconds: string
-    numberOfConnections: string
+    bufferSizeInKB: number
   }
 }

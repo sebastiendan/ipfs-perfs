@@ -3,6 +3,7 @@ import {
   VictoryAxis,
   VictoryChart,
   VictoryLegend,
+  VictoryLine,
   VictoryScatter,
   VictoryTheme,
   VictoryVoronoiContainer,
@@ -12,10 +13,11 @@ import { ClientBenchmark } from '@ipfs-perfs/models'
 
 interface Props {
   data: { data: ClientBenchmark.Coordinate[]; title: string }[]
+  isColorBlind: boolean
 }
 
 const Chart: React.FC<Props> = (props: Props) => {
-  const { data } = props
+  const { data, isColorBlind } = props
   const SETS = React.useMemo(
     () => [
       { color: '#c43a31', symbol: 'star' },
@@ -51,21 +53,31 @@ const Chart: React.FC<Props> = (props: Props) => {
         />
         <VictoryAxis />
         <VictoryAxis dependentAxis tickFormat={x => `${x}ms`} />
-        {data.map((wrappedDatum, index) => (
-          <VictoryScatter
-            key={`${index}-${wrappedDatum.title}`}
-            data={wrappedDatum.data.map(datum => ({
-              ...datum,
-              fill: SETS[index].color,
-              symbol: SETS[index].symbol,
-            }))}
-            style={{
-              data: {
+        {data.map((wrappedDatum, index) => {
+          return isColorBlind ? (
+            <VictoryScatter
+              key={`${index}-${wrappedDatum.title}`}
+              data={wrappedDatum.data.map(datum => ({
+                ...datum,
                 fill: SETS[index].color,
-              },
-            }}
-          />
-        ))}
+                symbol: SETS[index].symbol,
+              }))}
+              style={{
+                data: {
+                  fill: SETS[index].color,
+                },
+              }}
+            />
+          ) : (
+            <VictoryLine
+              key={`${index}-${wrappedDatum.title}`}
+              data={wrappedDatum.data}
+              style={{
+                data: { stroke: SETS[index].color },
+              }}
+            />
+          )
+        })}
       </VictoryChart>
     </div>
   )

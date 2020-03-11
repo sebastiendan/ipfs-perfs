@@ -3,7 +3,7 @@ import { ServeStaticModule } from '@nestjs/serve-static'
 import { join } from 'path'
 
 import { ClientsBenchmarkModule } from './clients-benchmark/clients-benchmark.module'
-import { NetworkBenchmarkModule } from './network-benchmark/network-benchmark.module'
+import { LoadTestingModule } from './load-testing/load-testing.module'
 
 @Module({
   imports: [
@@ -11,7 +11,7 @@ import { NetworkBenchmarkModule } from './network-benchmark/network-benchmark.mo
       rootPath: join(__dirname, '..', 'frontend'),
     }),
     ClientsBenchmarkModule,
-    NetworkBenchmarkModule,
+    LoadTestingModule,
   ],
 })
 export class AppModule {}
