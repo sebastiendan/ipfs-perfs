@@ -11,7 +11,6 @@ import * as last from 'it-last'
 
 import { ClientBenchmark } from '@ipfs-perfs/models'
 import { buildBuffer } from '@ipfs-perfs/utils'
-import SSESubject from './Subject.singleton'
 
 @Injectable()
 export class ClientsBenchmarkService {
@@ -22,10 +21,7 @@ export class ClientsBenchmarkService {
   private goRead
   private jsWrite
   private jsRead
-  private data = []
-  private normalizedData: ClientBenchmark.NormalizedData
-  private perfSubject: Subject<Observable<void>>
-  private perfSubscription: Subscription
+  private data: ClientBenchmark.Datum[] = []
 
   public async initNodes() {
     this.jsWrite = await ipfsdCTL.createController({
@@ -183,79 +179,68 @@ export class ClientsBenchmarkService {
     })
   }
 
-  public startSyncQueue(bufferSizeInKB: number) {
-    this.perfSubject = new Subject()
-    this.perfSubscription = this.perfSubject.subscribe({
-      next: newPerf => {
-        newPerf.subscribe({
-          complete: this.triggerPerfs.bind(this, bufferSizeInKB),
-        })
-      },
-    })
-
-    this.triggerPerfs(bufferSizeInKB)
-  }
-
-  public async stopSyncQueue() {
-    this.perfSubject.complete()
-    this.perfSubscription.unsubscribe()
-    this.data = []
-
-    await Promise.all(
-      [
-        this.jsWrite,
-        this.jsRead,
-        this.goWrite,
-        this.goRead,
-        this.apiRead,
-        this.apiWrite,
-        this.gatewayRead,
-      ].map(node => node.stop())
-    )
-  }
-
-  private triggerPerfs(bufferSizeInKB: number = 10): void {
-    const newPerf = new Observable<void>(subscriber => {
-      this.writeReadAndGetPerfs(bufferSizeInKB).then(
-        (datum: ClientBenchmark.Datum) => {
-          this.pushPerfData(datum)
-          this.normalizeData()
-          this.propagateUpdate()
-
-          subscriber.complete()
-        }
-      )
-    })
-
-    this.perfSubject.next(newPerf)
+  public start() {
+    return Promise.all([
+      this.writeReadAndGetPerfs(10),
+      this.writeReadAndGetPerfs(100),
+      this.writeReadAndGetPerfs(1000),
+      this.writeReadAndGetPerfs(5000),
+      this.writeReadAndGetPerfs(10000),
+    ])
   }
 
   private async writeReadAndGetPerfs(
     bufferSizeInKB: number = 10
   ): Promise<ClientBenchmark.Datum> {
+    // const js = await this.writeReadAndGetPerfsJS(bufferSizeInKB)
+    const go = await this.writeReadAndGetPerfsGo(bufferSizeInKB)
+    const api = await this.writeReadAndGetPerfsAPI(bufferSizeInKB)
+    const gateway = await this.writeReadAndGetPerfsGateway(bufferSizeInKB)
+
+    return {
+      api,
+      bufferSizeInKB,
+      gateway,
+      go,
+      js: { read: 0, write: 0 },
+      // js,
+    }
+  }
+
+  private async writeReadAndGetPerfsJS(
+    bufferSizeInKB: number
+  ): Promise<ClientBenchmark.Perf> {
     const buffer = buildBuffer(bufferSizeInKB)
 
-    // perf.start('js-write')
-    // const jsFile = await last(this.jsWrite.api.add(buffer))
-    // const jsWritePerf = perf.stop('js-write')
+    perf.start('js-write')
+    const jsFile = await last(this.jsWrite.api.add(buffer))
+    const writePerf = perf.stop('js-write')
 
-    // console.log('hash:\n', jsFile.cid.toString())
+    console.log('hash:\n', jsFile.cid.toString())
 
-    // perf.start('js-read')
-    // for await (const file of this.jsRead.api.get(jsFile.cid, {
-    //   preload: false,
-    // })) {
-    //   const content = []
+    perf.start('js-read')
+    for await (const file of this.jsRead.api.get(jsFile.cid, {
+      preload: false,
+    })) {
+      const content = []
 
-    //   for await (const chunk of file.content) {
-    //     content.push(chunk.length)
-    //   }
-    // }
-    // const jsReadPerf = perf.stop('js-read')
+      for await (const chunk of file.content) {
+        content.push(chunk.length)
+      }
+    }
+    const readPerf = perf.stop('js-read')
+
+    return { read: readPerf.time, write: writePerf.time }
+  }
+
+  private async writeReadAndGetPerfsGo(
+    bufferSizeInKB: number
+  ): Promise<ClientBenchmark.Perf> {
+    const buffer = buildBuffer(bufferSizeInKB)
 
     perf.start('go-write')
     const goFile = await last(this.goWrite.api.add(buffer))
-    const goWritePerf = perf.stop('go-write')
+    const writePerf = perf.stop('go-write')
 
     perf.start('go-read')
     for await (const file of this.goRead.api.get(goFile.cid, {
@@ -267,7 +252,15 @@ export class ClientsBenchmarkService {
         content.push(chunk.length)
       }
     }
-    const goReadPerf = perf.stop('go-read')
+    const readPerf = perf.stop('go-read')
+
+    return { read: readPerf.time, write: writePerf.time }
+  }
+
+  private async writeReadAndGetPerfsAPI(
+    bufferSizeInKB: number
+  ): Promise<ClientBenchmark.Perf> {
+    const buffer = buildBuffer(bufferSizeInKB)
 
     perf.start('api-write')
     const formData = new FormData()
@@ -279,64 +272,39 @@ export class ClientsBenchmarkService {
         headers: formData.getHeaders(),
       }
     )
-    const apiWritePerf = perf.stop('api-write')
+    const writePerf = perf.stop('api-write')
 
     perf.start('api-read')
     await axios.get(`http://localhost:5006/api/v0/get?arg=${apiFile.data.Hash}`)
-    const apiReadPerf = perf.stop('api-read')
+    const readPerf = perf.stop('api-read')
+
+    return { read: readPerf.time, write: writePerf.time }
+  }
+
+  private async writeReadAndGetPerfsGateway(
+    bufferSizeInKB: number
+  ): Promise<ClientBenchmark.Perf> {
+    const buffer = buildBuffer(bufferSizeInKB)
+    const goFile = await last(this.goWrite.api.add(buffer))
 
     perf.start('gateway-read')
     await axios.get(`http://localhost:8086/ipfs/${goFile.cid.toString()}`)
-    const gatewayReadPerf = perf.stop('api-read')
+    const readPerf = perf.stop('api-read')
 
-    return {
-      apiRead: apiReadPerf.time,
-      apiWrite: apiWritePerf.time,
-      gatewayRead: gatewayReadPerf.time,
-      goRead: goReadPerf.time,
-      goWrite: goWritePerf.time,
-      jsWrite: 0,
-      jsRead: 0,
-      // jsWrite: jsWritePerf.time,
-      // jsRead: jsReadPerf.time,
-    }
+    return { read: readPerf.time }
   }
 
-  pushPerfData(datum: ClientBenchmark.Datum) {
-    this.data.push(datum)
-  }
-
-  normalizeData() {
-    const hasDataOneElement = this.data.length
-
-    try {
-      if (!hasDataOneElement) {
-        throw Error(
-          'this.data is empty - Ensure that data was pushed before calling this method'
-        )
-      }
-
-      const arbitraryDatum = this.data[0]
-      const normalizedData = {} as ClientBenchmark.NormalizedData
-
-      Object.keys(arbitraryDatum).forEach(datumKey => {
-        if (arbitraryDatum.hasOwnProperty(datumKey)) {
-          normalizedData[datumKey] = this.data.map(
-            (datum: ClientBenchmark.Datum, index: number) => ({
-              x: index + 1,
-              y: datum[datumKey],
-            })
-          )
-        }
-      })
-
-      this.normalizedData = normalizedData
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  propagateUpdate() {
-    SSESubject.next(this.normalizedData)
+  public async clean() {
+    await Promise.all(
+      [
+        this.jsWrite,
+        this.jsRead,
+        this.goWrite,
+        this.goRead,
+        this.apiRead,
+        this.apiWrite,
+        this.gatewayRead,
+      ].map(node => node.stop())
+    )
   }
 }

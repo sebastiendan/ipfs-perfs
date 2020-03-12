@@ -55,7 +55,7 @@
     "react-swipeable-views": "^0.13.9",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^6.5.4",
-    "victory": "^34.1.1"
+    "victory": "34.1.1"
   },
   "devDependencies": {
     "@nestjs/schematics": "^6.7.0",

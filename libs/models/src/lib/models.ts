@@ -1,24 +1,17 @@
 export namespace ClientBenchmark {
   export type Coordinate = { x: number; y: number }
 
-  export interface Datum {
-    apiRead: number
-    apiWrite: number
-    gatewayRead: number
-    goRead: number
-    goWrite: number
-    jsRead: number
-    jsWrite: number
+  export interface Perf {
+    read: number
+    write?: number
   }
 
-  export interface NormalizedData {
-    apiRead: Coordinate[]
-    apiWrite: Coordinate[]
-    gatewayRead: Coordinate[]
-    goRead: Coordinate[]
-    goWrite: Coordinate[]
-    jsRead: Coordinate[]
-    jsWrite: Coordinate[]
+  export interface Datum {
+    api: Perf
+    bufferSizeInKB: number
+    gateway: Perf
+    go: Perf
+    js: Perf
   }
 }
 
