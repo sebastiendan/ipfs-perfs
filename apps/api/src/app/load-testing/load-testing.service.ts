@@ -73,7 +73,7 @@ export class LoadTestingService {
     this.readInstance = autocannon(
       {
         url: `http://localhost:5001/api/v0/get?arg=${file.cid.toString()}`,
-        connections: 10,
+        connections: 1,
         duration: +dto.durationInSeconds || 10,
         pipelining: 1,
       },
