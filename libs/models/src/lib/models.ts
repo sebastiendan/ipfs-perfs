@@ -23,3 +23,23 @@ export namespace LoadTesting {
     bufferSizeInKB: number
   }
 }
+
+export namespace NodeAPI {
+  export interface Datum {
+    bufferSizeInKB: number
+    read: Result
+    write: Result
+  }
+
+  export interface Perf {
+    read: number
+    write: number
+  }
+
+  export interface Result {
+    average: number
+    max: number
+    min: number
+    stddev: number
+  }
+}

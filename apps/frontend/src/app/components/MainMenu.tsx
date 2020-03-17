@@ -4,7 +4,12 @@ import ListItem from '@material-ui/core/ListItem'
 import ListItemIcon from '@material-ui/core/ListItemIcon'
 import ListItemText from '@material-ui/core/ListItemText'
 import { makeStyles, Theme, useTheme } from '@material-ui/core'
-import { Compare, Info, SettingsInputComponent } from '@material-ui/icons'
+import {
+  Compare,
+  CompareArrows,
+  Info,
+  SettingsInputComponent,
+} from '@material-ui/icons'
 import React from 'react'
 import { NavLink } from 'react-router-dom'
 
@@ -77,6 +82,15 @@ const MainMenu: React.FC = () => {
             <Compare />
           </ListItemIcon>
           <ListItemText primary="Clients benchmark" />
+        </ListItem>
+      </List>
+      <Divider />
+      <List>
+        <ListItem button component={Link('/node-api')}>
+          <ListItemIcon>
+            <CompareArrows />
+          </ListItemIcon>
+          <ListItemText primary="Node API" />
         </ListItem>
       </List>
       <Divider />

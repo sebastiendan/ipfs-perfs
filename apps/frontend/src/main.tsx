@@ -12,6 +12,13 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './app/app'
 
 const theme = createMuiTheme({
+  overrides: {
+    MUIPaperRoot: {
+      root: {
+        backgroundColor: '#202a30',
+      },
+    },
+  } as any,
   palette: {
     background: {
       default: '#202a30',

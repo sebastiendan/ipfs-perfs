@@ -5,7 +5,6 @@ import ipfsdCTL from 'ipfsd-ctl'
 import ipfsHttpModule from 'ipfs-http-client'
 import * as os from 'os'
 import { join } from 'path'
-import { Subject, Observable, Subscription } from 'rxjs'
 const perf = require('execution-time')()
 import * as last from 'it-last'
 
@@ -179,14 +178,14 @@ export class ClientsBenchmarkService {
     })
   }
 
-  public start() {
-    return Promise.all([
-      this.writeReadAndGetPerfs(10),
-      this.writeReadAndGetPerfs(100),
-      this.writeReadAndGetPerfs(1000),
-      this.writeReadAndGetPerfs(5000),
-      this.writeReadAndGetPerfs(10000),
-    ])
+  public async start() {
+    const data = []
+
+    for (const bufferSizeInKB of [10, 100, 1000, 5000, 10000, 100000]) {
+      data.push(await this.writeReadAndGetPerfs(bufferSizeInKB))
+    }
+
+    return data
   }
 
   private async writeReadAndGetPerfs(
@@ -270,6 +269,7 @@ export class ClientsBenchmarkService {
       formData.getBuffer(),
       {
         headers: formData.getHeaders(),
+        maxContentLength: Infinity,
       }
     )
     const writePerf = perf.stop('api-write')
